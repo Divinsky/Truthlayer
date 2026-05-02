@@ -1,0 +1,1174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TruthLayer — Verify AI before you trust it</title>
+<meta name="description" content="Paste any AI-generated answer. TruthLayer flags risky claims, unverifiable statements, and anything you should double-check." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0a0c'/%3E%3Cpath d='M16 5l9 4v8c0 6-4 9-9 10-5-1-9-4-9-10V9z' fill='none' stroke='%23ff7a3d' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M11.5 16.5l3 3 6-6' fill='none' stroke='%23ff7a3d' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --bg-elev-1: #111114;
+    --bg-elev-2: #16161b;
+    --bg-elev-3: #1c1c22;
+    --border: #26262d;
+    --border-strong: #34343d;
+    --text: #f5f5f7;
+    --text-dim: #a8a8b3;
+    --text-muted: #6f6f7a;
+    --accent: #ff7a3d;
+    --accent-hover: #ff8a55;
+    --accent-soft: rgba(255, 122, 61, 0.12);
+    --accent-border: rgba(255, 122, 61, 0.35);
+    --low: #34d399;
+    --med: #fbbf24;
+    --high: #f87171;
+    --low-soft: rgba(52, 211, 153, 0.12);
+    --med-soft: rgba(251, 191, 36, 0.12);
+    --high-soft: rgba(248, 113, 113, 0.12);
+    --radius: 14px;
+    --radius-sm: 9px;
+    --shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 8px 30px rgba(0,0,0,0.35);
+    --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(900px 500px at 80% -10%, rgba(255, 122, 61, 0.10), transparent 60%),
+      radial-gradient(700px 400px at -10% 10%, rgba(255, 122, 61, 0.06), transparent 60%);
+    background-attachment: fixed;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--accent-hover); }
+
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 22px;
+  }
+
+  /* Header */
+  header.site {
+    padding: 22px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    position: sticky;
+    top: 0;
+    backdrop-filter: blur(10px);
+    background: rgba(10,10,12,0.7);
+    z-index: 10;
+  }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-size: 17px;
+  }
+  .brand-mark {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    background: var(--bg-elev-2);
+    display: grid; place-items: center;
+    border: 1px solid var(--border);
+  }
+  .brand-mark svg { display: block; }
+  .nav-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 100px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+  .pill .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255,122,61,0.18);
+  }
+
+  /* Hero */
+  .hero {
+    padding: 72px 0 32px;
+    text-align: left;
+  }
+  .eyebrow {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 100px;
+    border: 1px solid var(--accent-border);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+  h1 {
+    font-size: clamp(34px, 5.5vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    margin: 0 0 18px;
+    font-weight: 600;
+  }
+  h1 .accent { color: var(--accent); }
+  .sub {
+    font-size: clamp(16px, 1.6vw, 18px);
+    color: var(--text-dim);
+    max-width: 680px;
+    margin: 0;
+  }
+
+  /* Examples row */
+  .examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 30px 0 14px;
+  }
+  .examples-label {
+    width: 100%;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .chip {
+    appearance: none;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 14px;
+    border-radius: 100px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chip:hover {
+    border-color: var(--accent-border);
+    background: var(--bg-elev-3);
+    color: var(--text);
+  }
+  .chip:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .chip svg { opacity: 0.6; }
+
+  /* Card / Composer */
+  .card {
+    background: var(--bg-elev-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .composer {
+    padding: 0;
+    overflow: hidden;
+  }
+  .composer textarea {
+    width: 100%;
+    min-height: 240px;
+    background: transparent;
+    color: var(--text);
+    border: none;
+    padding: 22px 22px 8px;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+  }
+  .composer textarea::placeholder {
+    color: var(--text-muted);
+  }
+  .composer-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px 16px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    background: var(--bg-elev-2);
+    flex-wrap: wrap;
+  }
+  .composer-meta {
+    color: var(--text-muted);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .composer-meta .sep { opacity: 0.4; }
+
+  .btn {
+    appearance: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    transition: transform 0.05s ease, background 0.15s ease, box-shadow 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #0d0a08;
+    padding: 11px 20px;
+    font-size: 14.5px;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 6px 18px rgba(255,122,61,0.28);
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:active { transform: translateY(1px); }
+  .btn-primary:disabled {
+    background: var(--bg-elev-3);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-dim);
+    padding: 9px 12px;
+    font-size: 13px;
+    border: 1px solid transparent;
+  }
+  .btn-ghost:hover {
+    color: var(--text);
+    background: var(--bg-elev-3);
+  }
+
+  /* Spinner */
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(13,10,8,0.25);
+    border-top-color: #0d0a08;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Results */
+  .results {
+    margin-top: 28px;
+    display: none;
+  }
+  .results.is-visible {
+    display: block;
+    animation: rise 0.4s ease;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .results-header {
+    padding: 22px 22px 4px;
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 28px;
+    align-items: center;
+  }
+  @media (max-width: 640px) {
+    .results-header { grid-template-columns: 1fr; gap: 18px; }
+  }
+
+  /* Score gauge */
+  .gauge {
+    position: relative;
+    width: 140px;
+    height: 140px;
+  }
+  .gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .gauge-track { stroke: var(--bg-elev-3); }
+  .gauge-fill {
+    transition: stroke-dashoffset 0.8s cubic-bezier(0.2, 0.7, 0.2, 1), stroke 0.3s;
+  }
+  .gauge-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+  .gauge-num {
+    font-size: 36px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .gauge-label {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .verdict {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .verdict-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    width: fit-content;
+    border: 1px solid;
+  }
+  .verdict-badge .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+  }
+  .verdict-badge.low { color: var(--low); background: var(--low-soft); border-color: rgba(52,211,153,0.3); }
+  .verdict-badge.low .dot { background: var(--low); }
+  .verdict-badge.med { color: var(--med); background: var(--med-soft); border-color: rgba(251,191,36,0.3); }
+  .verdict-badge.med .dot { background: var(--med); }
+  .verdict-badge.high { color: var(--high); background: var(--high-soft); border-color: rgba(248,113,113,0.3); }
+  .verdict-badge.high .dot { background: var(--high); }
+  .summary {
+    color: var(--text);
+    font-size: 17px;
+    line-height: 1.45;
+    letter-spacing: -0.005em;
+    margin: 0;
+  }
+
+  .results-section {
+    border-top: 1px solid var(--border);
+    padding: 22px;
+  }
+  .results-section h3 {
+    margin: 0 0 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  .results-section h3 .count {
+    color: var(--text-dim);
+    font-weight: 400;
+    margin-left: 6px;
+  }
+
+  /* Claims */
+  .claims { display: flex; flex-direction: column; gap: 12px; }
+  .claim {
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+  }
+  .claim-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .risk-tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 5px;
+    border: 1px solid;
+    flex-shrink: 0;
+  }
+  .risk-tag.low { color: var(--low); background: var(--low-soft); border-color: rgba(52,211,153,0.3); }
+  .risk-tag.med { color: var(--med); background: var(--med-soft); border-color: rgba(251,191,36,0.3); }
+  .risk-tag.high { color: var(--high); background: var(--high-soft); border-color: rgba(248,113,113,0.3); }
+
+  .claim-text {
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.5;
+    border-left: 2px solid var(--border-strong);
+    padding-left: 12px;
+    font-style: italic;
+  }
+  .claim-meta {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    font-size: 13.5px;
+  }
+  @media (max-width: 600px) {
+    .claim-meta { grid-template-columns: 1fr; gap: 10px; }
+  }
+  .claim-meta .label {
+    color: var(--text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .claim-meta .value {
+    color: var(--text-dim);
+    line-height: 1.45;
+  }
+  .claim-meta .value strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* Safer rewrite */
+  .safer {
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 18px 20px;
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.6;
+    position: relative;
+  }
+  .safer::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 14px; bottom: 14px;
+    width: 2px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+  .safer-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  /* Checklist */
+  .checklist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 14.5px;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .checklist li:hover { background: var(--bg-elev-3); }
+  .checklist .box {
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 5px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: grid;
+    place-items: center;
+    transition: all 0.15s;
+  }
+  .checklist li.done .box {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .checklist li.done .box svg { display: block; }
+  .checklist .box svg { display: none; }
+  .checklist li.done .text {
+    color: var(--text-muted);
+    text-decoration: line-through;
+  }
+
+  /* Empty state inside result */
+  .empty {
+    color: var(--text-muted);
+    font-size: 14px;
+    padding: 4px 2px;
+  }
+
+  /* Footer */
+  footer.site {
+    margin-top: 70px;
+    padding: 28px 0 50px;
+    color: var(--text-muted);
+    font-size: 13px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  footer .cols {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-elev-3);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s;
+    z-index: 100;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  ::selection {
+    background: rgba(255, 122, 61, 0.35);
+    color: #fff;
+  }
+
+  /* Reduce motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="container nav">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4l10 4v9c0 6.5-4.4 10-10 11-5.6-1-10-4.5-10-11V8z" stroke="#ff7a3d" stroke-width="2.2" stroke-linejoin="round"/>
+          <path d="M11 16.5l3.2 3.2L21 12.7" stroke="#ff7a3d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      TruthLayer
+    </div>
+    <div class="nav-meta">
+      <span class="pill"><span class="dot"></span> MVP demo</span>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="hero">
+    <span class="eyebrow">AI verification</span>
+    <h1>AI sounds confident. <span class="accent">That doesn&rsquo;t mean it&rsquo;s right.</span></h1>
+    <p class="sub">Paste any AI-generated answer and TruthLayer will flag risky claims, unverifiable statements, and anything you should double-check before using it.</p>
+  </section>
+
+  <section class="composer-section">
+    <div class="examples" role="group" aria-label="Try an example">
+      <span class="examples-label">Try an example</span>
+      <button class="chip" data-example="legal" type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6l3-3h12l3 3M5 6h14v15H5z"/><path d="M9 11h6M9 15h6"/></svg>
+        Legal memo
+      </button>
+      <button class="chip" data-example="medical" type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M4 12h16"/></svg>
+        Medical advice
+      </button>
+      <button class="chip" data-example="financial" type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
+        Financial advice
+      </button>
+      <button class="chip" data-example="customer" type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-3.5-7.1L21 3v5h-5"/></svg>
+        Customer service policy
+      </button>
+    </div>
+
+    <div class="card composer">
+      <label for="input" class="visually-hidden" style="position:absolute;left:-9999px;">AI-generated text to check</label>
+      <textarea id="input" placeholder="Paste an AI-generated answer here. The longer and more specific the text, the more useful the analysis."></textarea>
+      <div class="composer-bar">
+        <div class="composer-meta">
+          <span id="charCount">0 characters</span>
+          <span class="sep">&middot;</span>
+          <span>Nothing leaves your browser</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="clearBtn" class="btn btn-ghost" type="button">Clear</button>
+          <button id="checkBtn" class="btn btn-primary" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 4v5c0 5-4 8-9 9-5-1-9-4-9-9V7z"/><path d="M9 12l2 2 4-4"/></svg>
+            <span class="btn-label">Check for AI Risk</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="results" class="results card" aria-live="polite">
+    <div class="results-header">
+      <div class="gauge">
+        <svg viewBox="0 0 120 120">
+          <circle class="gauge-track" cx="60" cy="60" r="52" fill="none" stroke-width="10"/>
+          <circle id="gaugeFill" class="gauge-fill" cx="60" cy="60" r="52" fill="none" stroke-width="10"
+                  stroke-linecap="round"
+                  stroke-dasharray="326.7"
+                  stroke-dashoffset="326.7"/>
+        </svg>
+        <div class="gauge-text">
+          <div class="gauge-num" id="gaugeNum">0</div>
+          <div class="gauge-label">Risk score</div>
+        </div>
+      </div>
+      <div class="verdict">
+        <span id="verdictBadge" class="verdict-badge low"><span class="dot"></span><span id="verdictText">Low Risk</span></span>
+        <p class="summary" id="summary"></p>
+      </div>
+    </div>
+
+    <div class="results-section">
+      <h3>Flagged claims <span class="count" id="claimsCount"></span></h3>
+      <div id="claimsList" class="claims"></div>
+    </div>
+
+    <div class="results-section">
+      <h3>Safer rewritten version</h3>
+      <div class="safer" id="safer"></div>
+      <div class="safer-actions">
+        <button class="btn btn-ghost" id="copySafer" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>
+          Copy
+        </button>
+        <button class="btn btn-ghost" id="useSafer" type="button">Use as input</button>
+      </div>
+    </div>
+
+    <div class="results-section">
+      <h3>Verify before you use this</h3>
+      <ul class="checklist" id="checklist"></ul>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="container cols">
+    <div>TruthLayer &mdash; verify AI before you trust it.</div>
+    <div>Demo build. Analyses are heuristic and for guidance only.</div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* =========================================================
+   TruthLayer — heuristic risk analyzer
+   ========================================================= */
+
+const EXAMPLES = {
+  legal: `Under California Penal Code Section 502(c), any unauthorized access to a computer system is a felony punishable by up to three years in prison. The recent decision in People v. Gilbert (2023) confirmed that even read-only access without permission qualifies. You must notify all affected parties within 72 hours under the California Consumer Privacy Act, or face fines of up to $7,500 per violation. The statute of limitations is exactly four years from the date of access, and there are no exceptions for good-faith mistakes. Based on the facts you described, you are clearly liable and should expect criminal charges within 30 days.`,
+
+  medical: `Taking 1,200 mg of ibuprofen every 4 hours is safe for most adults and is the standard treatment for chronic lower back pain. A 2022 study in The Lancet found that this dosage reduced inflammation by 87% with no significant side effects. You can safely combine ibuprofen with acetaminophen at the same intervals for stronger relief. Most patients see complete recovery within 5 days. There is no need to consult a doctor unless symptoms last longer than two weeks.`,
+
+  financial: `Index funds historically return 10% per year, so investing $500 a month will give you roughly $1.2 million in 30 years, guaranteed. The S&P 500 has never had a losing decade. You should put your entire emergency fund into VOO for the best long-term returns. Roth IRAs allow unlimited contributions after age 50 under the SECURE Act 2.0, and withdrawals are always tax-free regardless of when you take them.`,
+
+  customer: `Per our refund policy, all customers are entitled to a full refund within 90 days of purchase, no questions asked. Federal law requires a 14-day cooling-off period for any online purchase, so you must process the refund immediately upon request. If the customer mentions the FTC, escalate to legal — those complaints carry automatic fines of $43,792 per violation. Always offer a 25% discount on their next order to prevent chargebacks. This policy applies in all 50 states and overrides any conflicting state law.`
+};
+
+/* ---------- DOM ---------- */
+const $ = (id) => document.getElementById(id);
+const input = $("input");
+const checkBtn = $("checkBtn");
+const clearBtn = $("clearBtn");
+const charCount = $("charCount");
+const results = $("results");
+const gaugeFill = $("gaugeFill");
+const gaugeNum = $("gaugeNum");
+const verdictBadge = $("verdictBadge");
+const verdictText = $("verdictText");
+const summary = $("summary");
+const claimsList = $("claimsList");
+const claimsCount = $("claimsCount");
+const safer = $("safer");
+const checklist = $("checklist");
+const toast = $("toast");
+
+/* ---------- Char counter ---------- */
+const updateCharCount = () => {
+  const n = input.value.length;
+  charCount.textContent = `${n.toLocaleString()} character${n === 1 ? "" : "s"}`;
+  checkBtn.disabled = input.value.trim().length < 12;
+};
+input.addEventListener("input", updateCharCount);
+updateCharCount();
+
+/* ---------- Examples ---------- */
+document.querySelectorAll(".chip").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    input.value = EXAMPLES[btn.dataset.example] || "";
+    updateCharCount();
+    input.focus();
+    input.scrollTop = 0;
+    showToast("Example loaded — click “Check for AI Risk”");
+  });
+});
+
+/* ---------- Clear ---------- */
+clearBtn.addEventListener("click", () => {
+  input.value = "";
+  updateCharCount();
+  results.classList.remove("is-visible");
+  input.focus();
+});
+
+/* ---------- Toast ---------- */
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+}
+
+/* =========================================================
+   Heuristic claim analyzer
+   ========================================================= */
+
+const PATTERNS = [
+  // High-impact authority/citation claims
+  { id: "statute", weight: 18, level: "High",
+    re: /\b(section\s*\d+|§\s*\d+|article\s*\d+|chapter\s*\d+|title\s*\d+|penal code|civil code|act|statute|regulation|directive)\b/i,
+    cat: "legal-citation",
+    why: "Cites a specific statute or legal provision. Laws and section numbers change and are easy to misquote.",
+    next: "Verify the section and current text on the official government source." },
+
+  { id: "case-cite", weight: 22, level: "High",
+    re: /\b[A-Z][a-zA-Z\.]+\s+v\.?\s+[A-Z][a-zA-Z\.]+/,
+    cat: "legal-citation",
+    why: "Quotes a specific court case. AI tools have a known pattern of inventing case citations.",
+    next: "Look up the case on a primary legal database such as CourtListener or Westlaw before relying on it." },
+
+  // Numbers + claims of fact
+  { id: "specific-pct", weight: 9, level: "Medium",
+    re: /\b\d{1,3}(\.\d+)?\s*%/,
+    cat: "statistic",
+    why: "Contains a specific percentage. Precise statistics are commonly fabricated or pulled from unrelated contexts.",
+    next: "Find the original study or dataset and confirm the figure and methodology." },
+
+  { id: "money", weight: 8, level: "Medium",
+    re: /\$\s?\d[\d,\.]*(?:\s?(?:million|billion|thousand|k|m|b))?/i,
+    cat: "money",
+    why: "Cites a specific dollar figure. These tend to be out of date or context-dependent.",
+    next: "Confirm the amount against a primary source dated within the last 12 months." },
+
+  { id: "dosage", weight: 16, level: "High",
+    re: /\b\d+\s?(?:mg|mcg|g|ml|iu)\b/i,
+    cat: "medical",
+    why: "Specifies a medical dose. Wrong dosing information can cause real harm.",
+    next: "Confirm dosing with a licensed clinician, the drug label, or a trusted source like the NIH or NHS." },
+
+  { id: "duration", weight: 5, level: "Low",
+    re: /\b(within|in)\s+\d+\s+(hours?|days?|weeks?|months?|years?)\b/i,
+    cat: "timeframe",
+    why: "Asserts a specific timeframe or deadline.",
+    next: "Verify the deadline in the official policy or law before acting on it." },
+
+  { id: "year", weight: 4, level: "Low",
+    re: /\b(19|20)\d{2}\b/,
+    cat: "date",
+    why: "References a specific year, study, or event date that may be inaccurate.",
+    next: "Check the year against a primary source." },
+
+  // Authority / publications
+  { id: "study", weight: 12, level: "High",
+    re: /\b(study|research|trial|paper|report|analysis|survey)\b/i,
+    cat: "study",
+    why: "Refers to a study or report without a verifiable citation. AI commonly cites studies that don't exist.",
+    next: "Search for the study by title on PubMed, Google Scholar, or the publishing journal." },
+
+  { id: "publisher", weight: 8, level: "Medium",
+    re: /\b(the lancet|nature|nejm|jama|harvard|stanford|mit|forbes|bloomberg|reuters|nyt|new york times|wsj)\b/i,
+    cat: "authority",
+    why: "Name-drops a respected institution or publication. Lends false credibility if the underlying source isn't real.",
+    next: "Find the actual article on the publisher's own site." },
+
+  // Absolutes & guarantees
+  { id: "absolute", weight: 14, level: "High",
+    re: /\b(always|never|all|none|every|guaranteed?|certain(ly)?|definitely|exactly|completely?|no exceptions?|no questions asked|in all (cases|states))\b/i,
+    cat: "absolute",
+    why: "Uses an absolute or guarantee. Real-world rules almost always have exceptions.",
+    next: "Look for the exception or edge cases the source omits." },
+
+  { id: "must", weight: 7, level: "Medium",
+    re: /\byou (must|should|need to|have to|are required to|are entitled to|are clearly liable)\b/i,
+    cat: "directive",
+    why: "Tells the user what they must or must not do. Directive advice should come from a qualified source.",
+    next: "Confirm the requirement with a qualified professional or the official policy." },
+
+  // Authority impersonation
+  { id: "expert", weight: 6, level: "Medium",
+    re: /\b(experts? say|doctors? recommend|lawyers? advise|the (sec|fda|ftc|irs|cfpb) (says|states|requires))\b/i,
+    cat: "appeal",
+    why: "Appeals to unnamed experts or regulators without a specific source.",
+    next: "Ask: which expert, which document, which date?" },
+
+  // Risky domains
+  { id: "guarantee-money", weight: 10, level: "High",
+    re: /\b(returns?|yield|profit|gains?|risk[- ]free|safe investment|beat the market)\b/i,
+    cat: "financial",
+    why: "Frames an investment outcome with little uncertainty. Past performance doesn't guarantee future results.",
+    next: "Check whether the claim is consistent with disclosures from a registered financial source." },
+
+  { id: "treatment", weight: 12, level: "High",
+    re: /\b(treatment|cure|safe (for|to)|side effects?|prescription|diagnose|symptom)\b/i,
+    cat: "medical",
+    why: "Discusses treatment, safety, or diagnosis. Health advice from AI should never be acted on without a clinician.",
+    next: "Discuss with a licensed clinician before changing any medication or treatment." },
+];
+
+/* Sentence split that keeps punctuation; protects decimals + abbreviations */
+function splitSentences(text) {
+  let t = text.trim().replace(/\s+/g, " ");
+  // Protect decimals like 1.2 and 502(c) section refs
+  t = t.replace(/(\d)\.(\d)/g, "$1․$2");
+  // Protect common abbreviations from being treated as sentence ends
+  t = t.replace(/\b(Mr|Mrs|Ms|Dr|Jr|Sr|St|vs|v|U\.S|e\.g|i\.e|etc|Inc|Ltd|Corp|No|Co|S&P)\./gi, "$1․");
+  const parts = t.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) || [t];
+  return parts.map(s => s.replace(/․/g, ".").trim()).filter(s => s.length > 4);
+}
+
+function analyzeSentence(s) {
+  const matches = [];
+  for (const p of PATTERNS) {
+    if (p.re.test(s)) matches.push(p);
+  }
+  if (matches.length === 0) return null;
+
+  const weight = matches.reduce((sum, m) => sum + m.weight, 0);
+  // Determine level: any High pattern => High; otherwise sum-based
+  const hasHigh = matches.some(m => m.level === "High");
+  const hasMed = matches.some(m => m.level === "Medium");
+  let level = "Low";
+  if (hasHigh || weight >= 22) level = "High";
+  else if (hasMed || weight >= 10) level = "Medium";
+
+  // Compose plain-English why & verifyNext (deduped by category)
+  const seenCat = new Set();
+  const whys = [];
+  const nexts = [];
+  for (const m of matches) {
+    if (seenCat.has(m.cat)) continue;
+    seenCat.add(m.cat);
+    whys.push(m.why);
+    nexts.push(m.next);
+  }
+  return {
+    claim: s,
+    riskLevel: level,
+    whyRisky: whys.slice(0, 2).join(" "),
+    verifyNext: nexts[0],
+    weight,
+    cats: [...seenCat],
+  };
+}
+
+function buildRewrite(text, flagged) {
+  let out = text;
+
+  // Soften absolutes and directives
+  const softenings = [
+    [/\bguaranteed?\b/gi, "likely (not guaranteed)"],
+    [/\balways\b/gi, "often"],
+    [/\bnever\b/gi, "rarely"],
+    [/\bexactly\b/gi, "approximately"],
+    [/\bcompletely?\b/gi, "largely"],
+    [/\bdefinitely\b/gi, "likely"],
+    [/\bcertainly\b/gi, "probably"],
+    [/\ball customers\b/gi, "most customers"],
+    [/\bin all cases\b/gi, "in many cases"],
+    [/\bin all 50 states\b/gi, "in many states"],
+    [/\bno exceptions\b/gi, "with limited exceptions"],
+    [/\bno questions asked\b/gi, "subject to review"],
+    [/\bsafe for most adults\b/gi, "described as generally tolerated, though individuals vary"],
+    [/\bis safe\b/gi, "may be tolerated"],
+    [/\bis the standard treatment\b/gi, "is one option clinicians may consider"],
+    [/\byou must\b/gi, "you may be required to"],
+    [/\byou are clearly liable\b/gi, "your liability is unclear and depends on the facts"],
+    [/\byou should\b/gi, "you may want to"],
+    [/\byou are entitled to\b/gi, "you may be entitled to"],
+  ];
+  for (const [re, replacement] of softenings) out = out.replace(re, replacement);
+
+  // Add a gentle preamble + caveat
+  const preamble = "Note: this version uses more careful language and removes claims that need verification.\n\n";
+  const caveat = " — Specific figures, citations, statutes, and dates above should be verified against a primary source before you rely on them.";
+  return preamble + out.trim() + caveat;
+}
+
+function buildChecklist(flagged) {
+  const cats = new Set();
+  flagged.forEach(c => c.cats.forEach(x => cats.add(x)));
+  const items = [];
+  if (cats.has("legal-citation")) items.push("Look up every statute, section number, and case citation on a primary legal source.");
+  if (cats.has("study") || cats.has("statistic")) items.push("Confirm any cited study or statistic exists, by title, on the original publisher's site.");
+  if (cats.has("medical") || cats.has("dosage")) items.push("Run any medical claim — especially dosing — past a licensed clinician.");
+  if (cats.has("financial") || cats.has("money")) items.push("Sanity-check financial figures against a regulated source (SEC, broker disclosure, official statement).");
+  if (cats.has("absolute") || cats.has("directive")) items.push("Replace absolute words (always, never, guaranteed) with the actual conditions and exceptions.");
+  if (cats.has("authority") || cats.has("appeal")) items.push("For every “experts say” claim, ask: which expert, which document, which date?");
+  if (cats.has("date") || cats.has("timeframe")) items.push("Confirm dates and deadlines against the official source they reference.");
+  if (items.length < 3) {
+    items.push("Read the text out loud — claims that sound suspiciously precise usually need a source.");
+    items.push("Ask yourself: would I rely on this if it weren't written by an AI?");
+  }
+  return items.slice(0, 5);
+}
+
+function summarize(score, verdict, flagged) {
+  if (flagged.length === 0) {
+    return "No specific risky claims jumped out, but always sanity-check anything an AI tells you before relying on it.";
+  }
+  const cats = new Set();
+  flagged.forEach(c => c.cats.forEach(x => cats.add(x)));
+  const focus = [];
+  if (cats.has("medical") || cats.has("dosage")) focus.push("medical");
+  if (cats.has("legal-citation") || cats.has("case-cite")) focus.push("legal");
+  if (cats.has("financial")) focus.push("financial");
+  if (cats.has("study") || cats.has("statistic")) focus.push("statistical");
+  const focusText = focus.length ? ` Mostly ${focus.slice(0,2).join(" and ")} claims.` : "";
+  const word = verdict === "High Risk" ? "many" : verdict === "Medium Risk" ? "several" : "a few";
+  return `${verdict.toLowerCase().replace(/^./, c => c.toUpperCase())} — ${word} statements need verification before you rely on this.${focusText}`;
+}
+
+function analyze(text) {
+  const sentences = splitSentences(text);
+  const scored = sentences.map(analyzeSentence).filter(Boolean);
+  // Sort by weight desc, take top ~6
+  scored.sort((a, b) => b.weight - a.weight);
+  const flagged = scored.slice(0, 6);
+
+  // Score = weighted sum with a soft cap so very heavy texts don't all peg at 100
+  const total = scored.reduce((s, c) => s + c.weight, 0);
+  // soft saturation: 0 → 0, 30 → 55, 60 → 75, 100 → 88, ∞ → ~95
+  let score = Math.round(95 * (1 - Math.exp(-total / 45)));
+  // density bonus: many sentences flagged out of total
+  if (sentences.length > 0) {
+    const density = scored.length / sentences.length;
+    score = Math.min(98, Math.round(score + density * 10));
+  }
+  if (text.trim().length < 60) score = Math.min(score, 35);
+  if (scored.length === 0) score = Math.max(8, Math.min(score, 20));
+
+  let verdict = "Low Risk";
+  if (score >= 65) verdict = "High Risk";
+  else if (score >= 32) verdict = "Medium Risk";
+
+  return {
+    riskScore: score,
+    verdict,
+    summary: summarize(score, verdict, flagged),
+    flaggedClaims: flagged.map(({ claim, riskLevel, whyRisky, verifyNext }) => ({
+      claim, riskLevel, whyRisky, verifyNext
+    })),
+    saferVersion: buildRewrite(text, flagged),
+    verifyChecklist: buildChecklist(flagged),
+  };
+}
+
+/* =========================================================
+   Render
+   ========================================================= */
+
+const RING_C = 2 * Math.PI * 52; // ~326.7
+
+function colorForScore(score) {
+  if (score >= 65) return "var(--high)";
+  if (score >= 32) return "var(--med)";
+  return "var(--low)";
+}
+function levelClass(level) {
+  return level === "High" ? "high" : level === "Medium" ? "med" : "low";
+}
+function verdictClass(v) {
+  return v === "High Risk" ? "high" : v === "Medium Risk" ? "med" : "low";
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function render(result) {
+  // Gauge
+  const score = Math.max(0, Math.min(100, result.riskScore));
+  gaugeFill.setAttribute("stroke", colorForScore(score));
+  // Animate from 0
+  gaugeFill.setAttribute("stroke-dashoffset", RING_C);
+  gaugeNum.textContent = "0";
+  requestAnimationFrame(() => {
+    gaugeFill.setAttribute("stroke-dashoffset", RING_C * (1 - score / 100));
+    animateNumber(gaugeNum, 0, score, 800);
+  });
+
+  // Verdict badge
+  verdictBadge.className = "verdict-badge " + verdictClass(result.verdict);
+  verdictText.textContent = result.verdict;
+  summary.textContent = result.summary;
+
+  // Claims
+  claimsCount.textContent = result.flaggedClaims.length
+    ? `(${result.flaggedClaims.length})` : "";
+  if (result.flaggedClaims.length === 0) {
+    claimsList.innerHTML = `<div class="empty">No specific claims were flagged. Still, sanity-check anything important.</div>`;
+  } else {
+    claimsList.innerHTML = result.flaggedClaims.map(c => `
+      <div class="claim">
+        <div class="claim-head">
+          <span class="risk-tag ${levelClass(c.riskLevel)}">${escapeHtml(c.riskLevel)} risk</span>
+        </div>
+        <div class="claim-text">&ldquo;${escapeHtml(c.claim)}&rdquo;</div>
+        <div class="claim-meta">
+          <div>
+            <div class="label">Why it may be risky</div>
+            <div class="value">${escapeHtml(c.whyRisky)}</div>
+          </div>
+          <div>
+            <div class="label">What to verify next</div>
+            <div class="value"><strong>${escapeHtml(c.verifyNext)}</strong></div>
+          </div>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  // Safer version
+  safer.textContent = result.saferVersion;
+
+  // Checklist
+  checklist.innerHTML = result.verifyChecklist.map(item => `
+    <li>
+      <span class="box">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0d0a08" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+      </span>
+      <span class="text">${escapeHtml(item)}</span>
+    </li>
+  `).join("");
+  checklist.querySelectorAll("li").forEach(li => {
+    li.addEventListener("click", () => li.classList.toggle("done"));
+  });
+
+  results.classList.add("is-visible");
+  results.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function animateNumber(el, from, to, duration) {
+  const start = performance.now();
+  function tick(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(from + (to - from) * eased);
+    if (t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ---------- Submit ---------- */
+checkBtn.addEventListener("click", () => {
+  const text = input.value.trim();
+  if (text.length < 12) return;
+
+  // Loading state
+  const labelEl = checkBtn.querySelector(".btn-label");
+  const originalLabel = labelEl.textContent;
+  const iconEl = checkBtn.querySelector("svg");
+  iconEl.style.display = "none";
+  const spinner = document.createElement("span");
+  spinner.className = "spinner";
+  checkBtn.prepend(spinner);
+  labelEl.textContent = "Analyzing…";
+  checkBtn.disabled = true;
+
+  // Simulated async delay so it feels like work happened
+  setTimeout(() => {
+    const result = analyze(text);
+    render(result);
+    spinner.remove();
+    iconEl.style.display = "";
+    labelEl.textContent = originalLabel;
+    checkBtn.disabled = false;
+  }, 650 + Math.random() * 400);
+});
+
+// Cmd/Ctrl + Enter to submit
+input.addEventListener("keydown", (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    e.preventDefault();
+    checkBtn.click();
+  }
+});
+
+/* ---------- Safer actions ---------- */
+$("copySafer").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(safer.textContent);
+    showToast("Copied safer version to clipboard");
+  } catch {
+    showToast("Couldn’t copy — select and copy manually");
+  }
+});
+$("useSafer").addEventListener("click", () => {
+  input.value = safer.textContent;
+  updateCharCount();
+  input.focus();
+  showToast("Safer version moved into the input");
+});
+</script>
+</body>
+</html>
