@@ -1,17 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-
-const personas = [
-  'Corporate Heckler',
-  'Burned-Out VC',
-  'Glam Assassin',
-  'Operations Dad',
-  'Chaos Goblin',
-  'Deadpan CFO',
-  'Legal Buzzkill',
-  'Product Therapist'
-]
+import { personas } from '@/lib/personas'
+import { presets } from '@/lib/presets'
 
 const intensities = [
   'Light',
@@ -40,6 +31,8 @@ export default function Home() {
   }
 
   async function handleRoast() {
+    if (!idea.trim()) return
+
     setLoading(true)
 
     try {
@@ -91,6 +84,26 @@ export default function Home() {
               </span>
             </div>
 
+            <div className="mb-5">
+              <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-3">
+                Try a sample
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {presets.map((preset) => (
+                  <button
+                    key={preset.title}
+                    onClick={() => {
+                      setIdea(preset.idea)
+                      setResult(null)
+                    }}
+                    className="px-3 py-2 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs hover:border-cyan-500/50 hover:text-cyan-300 transition"
+                  >
+                    {preset.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <textarea
               value={idea}
               onChange={(e) => setIdea(e.target.value)}
@@ -108,21 +121,24 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="grid md:grid-cols-2 gap-3">
                 {personas.map((persona) => {
-                  const active = selectedPersonas.includes(persona)
+                  const active = selectedPersonas.includes(persona.name)
 
                   return (
                     <button
-                      key={persona}
-                      onClick={() => togglePersona(persona)}
-                      className={`px-4 py-3 rounded-2xl text-sm border transition-all ${
+                      key={persona.name}
+                      onClick={() => togglePersona(persona.name)}
+                      className={`text-left p-4 rounded-2xl border transition-all ${
                         active
                           ? 'bg-cyan-400 text-black border-cyan-300'
-                          : 'border-zinc-700 text-zinc-300 hover:border-cyan-500/40 hover:bg-cyan-500/5'
+                          : 'border-zinc-800 bg-black/30 text-zinc-300 hover:border-cyan-500/40 hover:bg-cyan-500/5'
                       }`}
                     >
-                      {persona}
+                      <p className="font-semibold">{persona.name}</p>
+                      <p className={`text-xs mt-1 ${active ? 'text-black/70' : 'text-zinc-500'}`}>
+                        {persona.specialty}
+                      </p>
                     </button>
                   )
                 })}
@@ -153,7 +169,8 @@ export default function Home() {
 
             <button
               onClick={handleRoast}
-              className="mt-10 w-full bg-cyan-400 text-black font-bold text-lg px-6 py-4 rounded-3xl hover:opacity-90 transition"
+              disabled={!idea.trim() || loading}
+              className="mt-10 w-full bg-cyan-400 disabled:bg-zinc-700 disabled:text-zinc-400 text-black font-bold text-lg px-6 py-4 rounded-3xl hover:opacity-90 transition"
             >
               {loading ? 'Analyzing Truth...' : 'Roast My Idea'}
             </button>
@@ -232,6 +249,15 @@ export default function Home() {
                   </p>
                   <p className="text-zinc-200 leading-relaxed">
                     {result.analysis.executiveVerdict}
+                  </p>
+                </div>
+
+                <div className="mt-6 border border-zinc-800 rounded-3xl p-5 bg-black/30">
+                  <p className="text-yellow-400 font-semibold mb-3">
+                    Better Positioning
+                  </p>
+                  <p className="text-zinc-300 leading-relaxed">
+                    {result.analysis.improvedPositioning}
                   </p>
                 </div>
 
