@@ -21,13 +21,8 @@ const personaRoasts: Record<string, string> = {
   'Enterprise Whisperer': 'Procurement will not buy “revolutionary.” They buy risk reduction with a PDF and someone to blame.'
 }
 
-export async function POST(req: Request) {
-  const body = (await req.json()) as RoastRequest
-  const idea = body.idea?.trim() || 'Unknown idea'
-  const selectedPersonas = body.personas?.length ? body.personas.slice(0, 3) : fallbackPersonas
-  const intensity = body.intensity || 'Boardroom Honest'
-
-  const response = {
+function mockResponse(idea: string, selectedPersonas: string[], intensity: string) {
+  return {
     truthScore: 74,
     category: 'Early-stage concept / AI-enabled business idea',
     intensity,
@@ -53,8 +48,102 @@ export async function POST(req: Request) {
         differentiation: 55
       }
     },
-    privacyNote: 'This prototype is designed around ephemeral analysis: no permanent storage, no public training, no selling user ideas.'
+    privacyNote: 'This prototype is designed around ephemeral analysis: no permanent storage, no public training, no selling user ideas.',
+    mode: 'mock'
+  }
+}
+
+function buildPrompt(idea: string, selectedPersonas: string[], intensity: string) {
+  return `You are AI Truth Layer, a privacy-first AI boardroom roast engine.
+
+Analyze this user-submitted idea with two simultaneous goals:
+1. Roast it in a funny, sharp, memorable way using fictional AI comic-executive personas.
+2. Evaluate it with serious C-suite judgment.
+
+Do not impersonate real comedians, celebrities, living people, deceased people, or public figures.
+Do not copy catchphrases or known routines.
+Keep jokes clever, not hateful. Do not attack protected classes.
+
+User idea:
+${idea}
+
+Selected fictional personas:
+${selectedPersonas.join(', ')}
+
+Roast intensity:
+${intensity}
+
+Return ONLY valid JSON with this exact shape:
+{
+  "truthScore": number from 0 to 100,
+  "category": "short category label",
+  "intensity": "${intensity}",
+  "ideaPreview": "short sanitized summary under 160 characters",
+  "roasts": [
+    { "persona": "persona name", "text": "one sharp roast line" }
+  ],
+  "analysis": {
+    "executiveVerdict": "serious executive evaluation in 1-2 sentences",
+    "biggestRisk": "single biggest risk",
+    "nextMove": "specific recommended next step",
+    "improvedPositioning": "stronger positioning statement",
+    "partnerRoutes": ["3-5 possible partner categories"],
+    "scores": {
+      "virality": number from 0 to 100,
+      "monetization": number from 0 to 100,
+      "scalability": number from 0 to 100,
+      "brandStrength": number from 0 to 100,
+      "investorAppeal": number from 0 to 100,
+      "operationalRisk": number from 0 to 100,
+      "productMarketFit": number from 0 to 100,
+      "differentiation": number from 0 to 100
+    }
+  },
+  "privacyNote": "This analysis is designed for ephemeral processing. Do not include confidential details beyond the user's summary.",
+  "mode": "live"
+}`
+}
+
+export async function POST(req: Request) {
+  const body = (await req.json()) as RoastRequest
+  const idea = body.idea?.trim() || 'Unknown idea'
+  const selectedPersonas = body.personas?.length ? body.personas.slice(0, 3) : fallbackPersonas
+  const intensity = body.intensity || 'Boardroom Honest'
+
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json(mockResponse(idea, selectedPersonas, intensity))
   }
 
-  return NextResponse.json(response)
+  try {
+    const openAiResponse = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1-mini',
+        input: buildPrompt(idea, selectedPersonas, intensity),
+        temperature: 0.9
+      })
+    })
+
+    if (!openAiResponse.ok) {
+      console.error('OpenAI API error', await openAiResponse.text())
+      return NextResponse.json(mockResponse(idea, selectedPersonas, intensity))
+    }
+
+    const data = await openAiResponse.json()
+    const text = data.output_text
+
+    if (!text) {
+      return NextResponse.json(mockResponse(idea, selectedPersonas, intensity))
+    }
+
+    const parsed = JSON.parse(text)
+    return NextResponse.json(parsed)
+  } catch (error) {
+    console.error('Roast generation failed', error)
+    return NextResponse.json(mockResponse(idea, selectedPersonas, intensity))
+  }
 }
