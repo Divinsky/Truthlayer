@@ -1,3 +1,7 @@
+'use client'
+
+import { useState } from 'react'
+
 export default function Home() {
   const personas = [
     'Corporate Heckler',
@@ -6,6 +10,31 @@ export default function Home() {
     'Operations Dad',
     'Chaos Goblin'
   ]
+
+  const [idea, setIdea] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<any>(null)
+
+  async function handleRoast() {
+    setLoading(true)
+
+    try {
+      const res = await fetch('/api/roast', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ idea })
+      })
+
+      const data = await res.json()
+      setResult(data)
+    } catch (err) {
+      console.error(err)
+    }
+
+    setLoading(false)
+  }
 
   return (
     <main className="min-h-screen bg-black text-white px-6 py-10">
@@ -25,7 +54,10 @@ export default function Home() {
         <div className="grid lg:grid-cols-2 gap-8">
           <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6">
             <h2 className="text-2xl font-semibold mb-4">Roast My Idea</h2>
+
             <textarea
+              value={idea}
+              onChange={(e) => setIdea(e.target.value)}
               className="w-full h-52 bg-black border border-zinc-700 rounded-2xl p-4 text-zinc-200"
               placeholder="Paste your startup idea here..."
             />
@@ -34,6 +66,7 @@ export default function Home() {
               <p className="text-sm uppercase tracking-wider text-zinc-500 mb-3">
                 Choose your panel
               </p>
+
               <div className="flex flex-wrap gap-2">
                 {personas.map((persona) => (
                   <button
@@ -46,46 +79,61 @@ export default function Home() {
               </div>
             </div>
 
-            <button className="mt-8 bg-cyan-400 text-black font-semibold px-6 py-3 rounded-2xl hover:opacity-90 transition">
-              Roast My Idea
+            <button
+              onClick={handleRoast}
+              className="mt-8 bg-cyan-400 text-black font-semibold px-6 py-3 rounded-2xl hover:opacity-90 transition"
+            >
+              {loading ? 'Roasting...' : 'Roast My Idea'}
             </button>
           </div>
 
           <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold">Truth Score</h2>
-              <span className="text-cyan-400 text-4xl font-bold">72</span>
-            </div>
-
-            <div className="space-y-5">
+            {!result ? (
               <div>
-                <p className="text-pink-400 font-semibold">Corporate Heckler</p>
-                <p className="text-zinc-300 mt-2">
-                  “You used the phrase AI-powered ecosystem three times and I still have no idea what your product does.”
+                <h2 className="text-2xl font-semibold mb-6">Truth Score</h2>
+                <p className="text-zinc-500">
+                  Your AI roast and executive evaluation will appear here.
                 </p>
               </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-semibold">Truth Score</h2>
+                  <span className="text-cyan-400 text-4xl font-bold">
+                    {result.truthScore}
+                  </span>
+                </div>
 
-              <div>
-                <p className="text-yellow-400 font-semibold">Burned-Out VC</p>
-                <p className="text-zinc-300 mt-2">
-                  TAM assumptions unrealistic. Strong niche opportunity if repositioned toward operational healthcare workflows.
-                </p>
-              </div>
+                <div className="space-y-5">
+                  {result.roasts.map((roast: any) => (
+                    <div key={roast.persona}>
+                      <p className="text-pink-400 font-semibold">
+                        {roast.persona}
+                      </p>
+                      <p className="text-zinc-300 mt-2">{roast.text}</p>
+                    </div>
+                  ))}
 
-              <div>
-                <p className="text-cyan-400 font-semibold">Biggest Risk</p>
-                <p className="text-zinc-300 mt-2">
-                  Weak differentiation and unclear customer retention strategy.
-                </p>
-              </div>
+                  <div>
+                    <p className="text-cyan-400 font-semibold">
+                      Biggest Risk
+                    </p>
+                    <p className="text-zinc-300 mt-2">
+                      {result.analysis.biggestRisk}
+                    </p>
+                  </div>
 
-              <div>
-                <p className="text-green-400 font-semibold">Suggested Next Move</p>
-                <p className="text-zinc-300 mt-2">
-                  Narrow ICP, simplify messaging, and validate pricing with 10 customer interviews.
-                </p>
-              </div>
-            </div>
+                  <div>
+                    <p className="text-green-400 font-semibold">
+                      Suggested Next Move
+                    </p>
+                    <p className="text-zinc-300 mt-2">
+                      {result.analysis.nextMove}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
