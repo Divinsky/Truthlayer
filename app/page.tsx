@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import LoadingState from '@/components/LoadingState'
+import ShareCard from '@/components/ShareCard'
 import { personas } from '@/lib/personas'
 import { presets } from '@/lib/presets'
 
@@ -21,6 +23,7 @@ export default function Home() {
   ])
   const [intensity, setIntensity] = useState('Boardroom Honest')
   const [result, setResult] = useState<any>(null)
+  const [showShareCard, setShowShareCard] = useState(false)
 
   function togglePersona(persona: string) {
     if (selectedPersonas.includes(persona)) {
@@ -34,6 +37,7 @@ export default function Home() {
     if (!idea.trim()) return
 
     setLoading(true)
+    setShowShareCard(false)
 
     try {
       const res = await fetch('/api/roast', {
@@ -95,6 +99,7 @@ export default function Home() {
                     onClick={() => {
                       setIdea(preset.idea)
                       setResult(null)
+                      setShowShareCard(false)
                     }}
                     className="px-3 py-2 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs hover:border-cyan-500/50 hover:text-cyan-300 transition"
                   >
@@ -177,7 +182,9 @@ export default function Home() {
           </div>
 
           <div className="bg-zinc-950/80 backdrop-blur border border-zinc-800 rounded-[32px] p-8 shadow-2xl shadow-pink-500/5">
-            {!result ? (
+            {loading ? (
+              <LoadingState />
+            ) : !result ? (
               <div className="h-full flex flex-col justify-center">
                 <div className="mb-8">
                   <p className="text-sm uppercase tracking-[0.3em] text-pink-400 mb-3">
@@ -297,6 +304,26 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
+
+                <button
+                  onClick={() => setShowShareCard(!showShareCard)}
+                  className="mt-8 w-full rounded-3xl border border-cyan-500/40 px-6 py-4 text-cyan-300 hover:bg-cyan-500/10 transition"
+                >
+                  {showShareCard ? 'Hide Share Card' : 'Generate Share Card'}
+                </button>
+
+                {showShareCard && (
+                  <div className="mt-6">
+                    <ShareCard
+                      truthScore={result.truthScore}
+                      verdict={result.analysis.executiveVerdict}
+                      topRoast={result.roasts[0]?.text || 'Your idea survived. Barely.'}
+                    />
+                    <p className="text-xs text-zinc-500 mt-3 text-center">
+                      Screenshot this card for now. Export button coming next.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
