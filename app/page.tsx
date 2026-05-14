@@ -73,7 +73,7 @@ export default function Home() {
             <span>Private By Design</span>
             <span>Founder Intel</span>
           </div>
-          <button className="btn btn-primary py-3">Enter Boardroom</button>
+          <button onClick={() => document.getElementById('roast-room')?.scrollIntoView({ behavior: 'smooth' })} className="btn btn-primary py-3">Enter Boardroom</button>
         </div>
       </nav>
 
@@ -81,7 +81,7 @@ export default function Home() {
         <div className="hero-grid grid grid-cols-[1.05fr_0.95fr] gap-12 items-end">
           <div>
             <div className="eyebrow mb-6 flex items-center gap-3">
-              <span className="dot dot-magenta" /> The Roast Room / Confidential Alpha
+              <span className="dot dot-magenta" /> The Roast Room / Friends & Founder Preview
             </div>
             <h1 className="font-display text-[clamp(64px,10vw,150px)] leading-[0.86] text-[color:var(--bone)]">
               Your idea needs a boardroom roast.
@@ -93,7 +93,7 @@ export default function Home() {
               <button onClick={() => document.getElementById('roast-room')?.scrollIntoView({ behavior: 'smooth' })} className="btn btn-primary">
                 Roast My Idea
               </button>
-              <button className="btn">View Trust Layer</button>
+              <button onClick={() => document.getElementById('trust-layer')?.scrollIntoView({ behavior: 'smooth' })} className="btn">View Trust Layer</button>
             </div>
           </div>
 
@@ -269,7 +269,7 @@ export default function Home() {
                   ))}
                 </div>
 
-                <div className="mt-6 border border-[color:var(--cyan)]/30 bg-[color:var(--cyan-soft)] p-6">
+                <div className="mt-6 border border-[color:var(--line-2)] bg-[color:var(--cyan-soft)] p-6">
                   <p className="eyebrow mb-3 text-[color:var(--cyan)]">Executive Verdict</p>
                   <p className="text-lg leading-relaxed text-white">{result.analysis.executiveVerdict}</p>
                 </div>
@@ -314,7 +314,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="shell pb-20">
+      <section id="trust-layer" className="shell pb-20">
         <div className="card grid gap-8 p-8 md:grid-cols-[1fr_0.9fr]">
           <div>
             <p className="eyebrow mb-4 text-[color:var(--cyan)]">Private By Design</p>
