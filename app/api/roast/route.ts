@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { personas as personaList } from '@/lib/personas'
+import { clientKey, rateLimit } from '@/lib/rateLimit'
 
 type RoastRequest = {
   idea?: string
@@ -104,11 +106,41 @@ Return ONLY valid JSON with this exact shape:
 }`
 }
 
+const MAX_IDEA_CHARS = 2000
+const ALLOWED_PERSONAS = new Set(personaList.map((p) => p.name))
+const ALLOWED_INTENSITIES = new Set(['Light', 'Boardroom Honest', 'Brutal', 'Boardroom Bloodbath'])
+
 export async function POST(req: Request) {
-  const body = (await req.json()) as RoastRequest
+  const limited = rateLimit(clientKey(req), 10, 60_000)
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: 'Too many requests. Try again shortly.' },
+      { status: 429, headers: { 'Retry-After': String(limited.retryAfter) } }
+    )
+  }
+
+  let body: RoastRequest
+  try {
+    body = (await req.json()) as RoastRequest
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
+  if (!body || typeof body !== 'object') {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+  }
+  if (body.idea !== undefined && typeof body.idea !== 'string') {
+    return NextResponse.json({ error: 'idea must be text' }, { status: 400 })
+  }
   const idea = body.idea?.trim() || 'Unknown idea'
-  const selectedPersonas = body.personas?.length ? body.personas.slice(0, 3) : fallbackPersonas
-  const intensity = body.intensity || 'Boardroom Honest'
+  if (idea.length > MAX_IDEA_CHARS) {
+    return NextResponse.json({ error: `Keep the idea under ${MAX_IDEA_CHARS} characters` }, { status: 413 })
+  }
+  const requested = Array.isArray(body.personas)
+    ? body.personas.filter((p): p is string => typeof p === 'string' && ALLOWED_PERSONAS.has(p))
+    : []
+  const selectedPersonas = requested.length ? requested.slice(0, 3) : fallbackPersonas
+  const intensity =
+    typeof body.intensity === 'string' && ALLOWED_INTENSITIES.has(body.intensity) ? body.intensity : 'Boardroom Honest'
 
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(mockResponse(idea, selectedPersonas, intensity))
@@ -129,7 +161,7 @@ export async function POST(req: Request) {
     })
 
     if (!openAiResponse.ok) {
-      console.error('OpenAI API error', await openAiResponse.text())
+      console.error('OpenAI API error', openAiResponse.status)
       return NextResponse.json(mockResponse(idea, selectedPersonas, intensity))
     }
 
